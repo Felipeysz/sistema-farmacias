@@ -1,0 +1,183 @@
+version: "3.9"
+
+# Ambiente LOCAL de desenvolvimento — sistema de gestão multi-farmácias
+# Backend .NET e Frontend React entram aqui como serviços próprios
+# assim que tiverem Dockerfile (ainda não codados).
+
+networks:
+  farmacias-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  n8n_data:
+  evolution_instances:
+  redis_data:
+
+services:
+
+  # ---------------------------------------------------------------
+  # Banco de dados principal — usado pelo backend, n8n e Evolution API
+  # (3 databases lógicos dentro da mesma instância, isolados por nome)
+  # ---------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: farmacias-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      # usado pelo script de init abaixo para criar os 3 databases lógicos
+      POSTGRES_MULTIPLE_DATABASES: ${POSTGRES_DB},${N8N_DB_NAME},${EVOLUTION_DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-multiple-postgres-databases.sh:/docker-entrypoint-initdb.d/init-multiple-postgres-databases.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - farmacias-net
+
+  # ---------------------------------------------------------------
+  # Fila — pipeline resiliente de vendas + notificações CRM→WhatsApp
+  # ---------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: farmacias-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"   # protocolo AMQP (usado pelo backend)
+      - "15672:15672" # painel de administração (http://localhost:15672)
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - farmacias-net
+
+  # ---------------------------------------------------------------
+  # Cache — usado pela Evolution API (sessões/instâncias do WhatsApp)
+  # ---------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: farmacias-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - farmacias-net
+
+  # ---------------------------------------------------------------
+  # n8n — Atendimento WhatsApp + CRM
+  # ---------------------------------------------------------------
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: farmacias-n8n
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      N8N_HOST: ${N8N_HOST}
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      DB_POSTGRESDB_DATABASE: ${N8N_DB_NAME}
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      GENERIC_TIMEZONE: America/Bahia
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - farmacias-net
+
+  # ---------------------------------------------------------------
+  # Evolution API — provedor de WhatsApp (self-hosted)
+  # ---------------------------------------------------------------
+  evolution-api:
+    image: atendai/evolution-api:latest
+    container_name: farmacias-evolution-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${EVOLUTION_DB_NAME}
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379
+      CACHE_REDIS_PREFIX_KEY: evolution
+      WEBHOOK_GLOBAL_URL: ${EVOLUTION_WEBHOOK_URL} # aponta pro webhook do fluxo de Atendimento no n8n
+      WEBHOOK_GLOBAL_ENABLED: "true"
+      WEBHOOK_EVENTS_MESSAGES_UPSERT: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - evolution_instances:/evolution/instances
+    networks:
+      - farmacias-net
+
+  # ---------------------------------------------------------------
+  # Backend .NET — placeholder, descomentar quando o Dockerfile existir
+  # ---------------------------------------------------------------
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: farmacias-backend
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   environment:
+  #     ConnectionStrings__Default: Host=postgres;Database=${BACKEND_DB_NAME};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+  #     RabbitMq__Host: rabbitmq
+  #     RabbitMq__User: ${RABBITMQ_USER}
+  #     RabbitMq__Password: ${RABBITMQ_PASSWORD}
+  #     N8n__ApiKey: ${N8N_BACKEND_API_KEY}
+  #   ports:
+  #     - "5000:5000"
+  #   networks:
+  #     - farmacias-net
+
+  # ---------------------------------------------------------------
+  # Frontend React — placeholder, descomentar quando o Dockerfile existir
+  # ---------------------------------------------------------------
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: farmacias-frontend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - farmacias-net

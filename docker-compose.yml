@@ -115,7 +115,7 @@ services:
   # Evolution API — provedor de WhatsApp (self-hosted)
   # ---------------------------------------------------------------
   evolution-api:
-    image: atendai/evolution-api:latest
+    image: evoapicloud/evolution-api:latest
     container_name: farmacias-evolution-api
     restart: unless-stopped
     depends_on:

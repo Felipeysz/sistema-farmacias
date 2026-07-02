@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Verificar se já existe projeto .NET
+        id: check
+        run: |
+          if find . -name "*.csproj" -o -name "*.sln" | grep -q .; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nenhum .csproj ou .sln encontrado ainda — pulando build."
+          fi
+
+      - name: Configurar .NET SDK
+        if: steps.check.outputs.found == 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restaurar dependências
+        if: steps.check.outputs.found == 'true'
+        run: dotnet restore
+
+      - name: Build
+        if: steps.check.outputs.found == 'true'
+        run: dotnet build --no-restore --configuration Release

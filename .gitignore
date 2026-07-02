@@ -74,3 +74,4 @@ Thumbs.db
 # CLI própria (sprint start) — config local, nunca compartilhar
 # =============================================================
 .sprintcli/
+backend/.vs/ 

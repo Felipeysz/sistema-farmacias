@@ -16,14 +16,17 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Verificar se já existe projeto .NET
+      - name: Localizar arquivo de solução (.sln ou .slnx)
         id: check
+        working-directory: backend
         run: |
-          if find . -name "*.csproj" -o -name "*.sln" | grep -q .; then
+          SLN_FILE=$(find . -maxdepth 1 \( -name "*.sln" -o -name "*.slnx" \) | head -1)
+          if [ -n "$SLN_FILE" ]; then
             echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "sln=${SLN_FILE#./}" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Nenhum .csproj ou .sln encontrado ainda — pulando build."
+            echo "::notice::Nenhum .sln ou .slnx encontrado em backend/ — pulando build."
           fi
 
       - name: Configurar .NET SDK
@@ -34,8 +37,10 @@ jobs:
 
       - name: Restaurar dependências
         if: steps.check.outputs.found == 'true'
-        run: dotnet restore
+        working-directory: backend
+        run: dotnet restore "${{ steps.check.outputs.sln }}"
 
       - name: Build
         if: steps.check.outputs.found == 'true'
-        run: dotnet build --no-restore --configuration Release
+        working-directory: backend
+        run: dotnet build "${{ steps.check.outputs.sln }}" --no-restore --configuration Release

@@ -25,6 +25,7 @@ builder.Configuration["N8n:BackendApiKey"] = Environment.GetEnvironmentVariable(
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IFarmaciaRepository, FarmaciaRepository>();
+builder.Services.AddScoped<IContatoRepository, ContatoRepository>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using SistemaFarmacias.Api.Auth;
 using SistemaFarmacias.Application.Dtos;
 using SistemaFarmacias.Application.Interfaces;
 using SistemaFarmacias.Domain.Entities;
@@ -8,7 +7,6 @@ namespace SistemaFarmacias.Api.Controllers;
 
 [ApiController]
 [Route("api/n8n/crm/contatos")]
-[ApiKeyAuth]
 public class ContatosController : ControllerBase
 {
     private readonly IContatoRepository _contatoRepository;

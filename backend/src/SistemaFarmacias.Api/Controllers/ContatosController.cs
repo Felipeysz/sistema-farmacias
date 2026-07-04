@@ -22,18 +22,35 @@ public class ContatosController : ControllerBase
     {
         var contato = await _contatoRepository.UpsertAsync(request.FarmaciaId, request.Telefone, request.Nome);
 
-        var response = new ContatoResponseDto
-        {
-            Id = contato.Id,
-            FarmaciaId = contato.FarmaciaId,
-            Telefone = contato.Telefone,
-            Nome = contato.Nome,
-            UltimaInteracaoEm = contato.UltimaInteracaoEm,
-            UltimaCompraEm = contato.UltimaCompraEm,
-            TotalGasto = contato.TotalGasto,
-            Status = contato.Status.ToString()
-        };
-
-        return Ok(response);
+        return Ok(MapToResponse(contato));
     }
+
+    [HttpPatch("{id:guid}")]
+    public async Task<ActionResult<ContatoResponseDto>> AtualizarAposVenda(
+        Guid id,
+        [FromBody] ContatoAtualizarAposVendaRequestDto request)
+    {
+        var contato = await _contatoRepository.AtualizarAposVendaAsync(
+            id,
+            request.FarmaciaId,
+            request.DataUltimaCompra,
+            request.ValorCompra);
+
+        if (contato is null)
+            return NotFound(new { message = "Contato não encontrado para essa farmácia." });
+
+        return Ok(MapToResponse(contato));
+    }
+
+    private static ContatoResponseDto MapToResponse(SistemaFarmacias.Domain.Entities.Contato contato) => new()
+    {
+        Id = contato.Id,
+        FarmaciaId = contato.FarmaciaId,
+        Telefone = contato.Telefone,
+        Nome = contato.Nome,
+        UltimaInteracaoEm = contato.UltimaInteracaoEm,
+        UltimaCompraEm = contato.UltimaCompraEm,
+        TotalGasto = contato.TotalGasto,
+        Status = contato.Status.ToString()
+    };
 }

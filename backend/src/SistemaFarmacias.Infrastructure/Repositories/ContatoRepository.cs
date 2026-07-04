@@ -45,4 +45,29 @@ public class ContatoRepository : IContatoRepository
 
         return contato;
     }
+
+    public async Task<Contato?> AtualizarAposVendaAsync(
+        Guid contatoId,
+        Guid farmaciaId,
+        DateTime dataUltimaCompra,
+        decimal valorCompra)
+    {
+        // FarmaciaId incluído no filtro: garante isolamento entre tenants —
+        // um contato de outra farmácia nunca é encontrado nem atualizado aqui.
+        var contato = await _context.Contatos
+            .FirstOrDefaultAsync(c => c.Id == contatoId && c.FarmaciaId == farmaciaId);
+
+        if (contato is null)
+            return null;
+
+        contato.TotalGasto += valorCompra;
+        contato.UltimaCompraEm = dataUltimaCompra;
+
+        if (contato.Status == StatusContato.Inativo)
+            contato.Status = StatusContato.Ativo;
+
+        await _context.SaveChangesAsync();
+
+        return contato;
+    }
 }

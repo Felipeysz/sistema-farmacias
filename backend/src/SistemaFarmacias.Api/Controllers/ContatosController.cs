@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using SistemaFarmacias.Api.Auth;
 using SistemaFarmacias.Application.Dtos;
 using SistemaFarmacias.Application.Interfaces;
+using SistemaFarmacias.Domain.Entities;
 
 namespace SistemaFarmacias.Api.Controllers;
 
@@ -42,7 +43,22 @@ public class ContatosController : ControllerBase
         return Ok(MapToResponse(contato));
     }
 
-    private static ContatoResponseDto MapToResponse(SistemaFarmacias.Domain.Entities.Contato contato) => new()
+    /// <summary>
+    /// Lista os contatos inativos de uma farmácia. Usado pelo Fluxo 2.2
+    /// (schedule diário de reativação de inativos).
+    /// </summary>
+    [HttpGet("inativos")]
+    public async Task<ActionResult<List<ContatoResponseDto>>> ListarInativos([FromQuery] Guid farmaciaId)
+    {
+        if (farmaciaId == Guid.Empty)
+            return BadRequest(new { message = "farmaciaId é obrigatório." });
+
+        var contatos = await _contatoRepository.GetInativosAsync(farmaciaId);
+
+        return Ok(contatos.Select(MapToResponse));
+    }
+
+    private static ContatoResponseDto MapToResponse(Contato contato) => new()
     {
         Id = contato.Id,
         FarmaciaId = contato.FarmaciaId,

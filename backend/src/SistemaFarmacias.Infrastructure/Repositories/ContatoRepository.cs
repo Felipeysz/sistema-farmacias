@@ -36,8 +36,6 @@ public class ContatoRepository : IContatoRepository
         }
         else if (!string.IsNullOrWhiteSpace(nome))
         {
-            // Só sobrescreve o nome se um novo valor foi enviado,
-            // para não apagar um nome já conhecido com um upsert vazio.
             contato.Nome = nome;
         }
 
@@ -52,8 +50,6 @@ public class ContatoRepository : IContatoRepository
         DateTime dataUltimaCompra,
         decimal valorCompra)
     {
-        // FarmaciaId incluído no filtro: garante isolamento entre tenants —
-        // um contato de outra farmácia nunca é encontrado nem atualizado aqui.
         var contato = await _context.Contatos
             .FirstOrDefaultAsync(c => c.Id == contatoId && c.FarmaciaId == farmaciaId);
 
@@ -69,5 +65,13 @@ public class ContatoRepository : IContatoRepository
         await _context.SaveChangesAsync();
 
         return contato;
+    }
+
+    public Task<List<Contato>> GetInativosAsync(Guid farmaciaId)
+    {
+        return _context.Contatos
+            .Where(c => c.FarmaciaId == farmaciaId && c.Status == StatusContato.Inativo)
+            .OrderBy(c => c.UltimaCompraEm)
+            .ToListAsync();
     }
 }

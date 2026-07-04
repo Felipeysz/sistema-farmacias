@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using SistemaFarmacias.Api.Auth;
+using Microsoft.AspNetCore.Mvc;
 using SistemaFarmacias.Application.Dtos;
 using SistemaFarmacias.Application.Interfaces;
 
@@ -7,7 +6,6 @@ namespace SistemaFarmacias.Api.Controllers;
 
 [ApiController]
 [Route("api/n8n/farmacias")]
-[ApiKeyAuth]
 public class FarmaciasController : ControllerBase
 {
     private readonly IFarmaciaRepository _farmaciaRepository;

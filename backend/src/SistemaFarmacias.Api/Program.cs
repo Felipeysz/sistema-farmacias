@@ -1,5 +1,6 @@
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
+using SistemaFarmacias.Api.Auth;
 using SistemaFarmacias.Application.Interfaces;
 using SistemaFarmacias.Infrastructure.Persistence;
 using SistemaFarmacias.Infrastructure.Repositories;
@@ -23,7 +24,16 @@ builder.Configuration["ConnectionStrings:DefaultConnection"] =
 builder.Configuration["N8n:BackendApiKey"] = Environment.GetEnvironmentVariable("N8N_BACKEND_API_KEY");
 
 builder.Services.AddOpenApi();
-builder.Services.AddControllers();
+
+// LASDWAS-12: ApiKeyAuthAttribute aplicado globalmente a todos os controllers,
+// em vez de exigir o atributo [ApiKeyAuth] repetido manualmente em cada um.
+// Como todas as rotas do projeto vivem sob /api/n8n/*, isso protege
+// automaticamente qualquer endpoint novo, presente ou futuro.
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ApiKeyAuthAttribute>();
+});
+
 builder.Services.AddScoped<IFarmaciaRepository, FarmaciaRepository>();
 builder.Services.AddScoped<IContatoRepository, ContatoRepository>();
 builder.Services.AddScoped<IInteracaoRepository, InteracaoRepository>();

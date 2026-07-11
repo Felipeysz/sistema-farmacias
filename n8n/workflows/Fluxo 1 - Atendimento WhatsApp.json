@@ -1,0 +1,70 @@
+{
+  "name": "Fluxo 1 - Atendimento WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-atendimento",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f7c18f21-a2a1-4d56-966e-acc13397c096",
+      "name": "Webhook",
+      "webhookId": "d243ccbd-b131-48fc-9ab7-0d11b912ae50"
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:5079/api/n8n/farmacias/by-whatsapp/{{ $json.body.instance }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "faa215f6-e157-4e55-83f4-a6bbd5d4961b",
+      "name": "Identificar Farmácia",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XHs0wwLG07k2lvbT",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Identificar Farmácia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "051db2a2-b41b-4696-8fa8-23810d053b74",
+  "meta": {
+    "instanceId": "0a2780aa64ab71baea2553fcd5762839999421886901a500aca11f39e29bb78d"
+  },
+  "nodeGroups": [],
+  "id": "XqAw8PJFxTnr0qEu",
+  "tags": []
+}

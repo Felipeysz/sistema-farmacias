@@ -101,6 +101,7 @@ services:
       DB_POSTGRESDB_USER: ${POSTGRES_USER}
       DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
       GENERIC_TIMEZONE: America/Bahia
+      NODE_OPTIONS: --dns-result-order=ipv4first
     ports:
       - "5678:5678"
     volumes:

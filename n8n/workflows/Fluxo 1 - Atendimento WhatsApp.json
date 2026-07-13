@@ -298,6 +298,147 @@
       ],
       "id": "ddf442d1-acd7-4e39-b0c4-73a791d7814f",
       "name": "Switch Intenção"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f371c100-292a-4cb7-b783-94fb4fbfffc0",
+              "name": "mensagemResposta",
+              "value": "=Nosso horário de funcionamento: {{ $('Identificar Farmácia').item.json.horarioFuncionamento }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        -224
+      ],
+      "id": "9d637236-3f9b-4d51-ad7b-3838fbc17b3b",
+      "name": "Resposta Horario"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a5900147-b3af-48bb-9456-8ee766dcbc1e",
+              "name": "mensagemResposta",
+              "value": "=Estamos localizados em: {{ $('Identificar Farmácia').item.json.endereco }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        -80
+      ],
+      "id": "2bdecea5-77e9-4ad8-9c76-36156e00180a",
+      "name": "Resposta Localizacao"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "92965d4a-a42f-4eb5-9ed3-c04a8c8b41ae",
+              "name": "mensagemResposta",
+              "value": "Já vou te transferir para um atendente humano, aguarde um momento 😊",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        48
+      ],
+      "id": "f3d9b74d-c6c8-4f70-8a68-7617b2e8ddec",
+      "name": "Transferir Atendente"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "19d2a643-207f-40d6-af06-27c085885190",
+              "name": "mensagemResposta",
+              "value": "={{ $('Identificar Farmácia').item.json.mensagemSaudacao }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        176
+      ],
+      "id": "abf32e06-ea3f-4226-832d-ed82efc0d1eb",
+      "name": "Mensagem Saudacao"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e69cf131-22e3-4271-8654-04a16dc566d9",
+              "name": "mensagemResposta",
+              "value": "Desculpe, não entendi. Posso ajudar com: horário, endereço ou falar com um atendente.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        304
+      ],
+      "id": "38615e03-6f5e-4e8f-9d49-1fd9269eb698",
+      "name": "Fallback Error"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $('Webhook').item.json.body.instance }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"number\": \"{{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}\",\n    \"text\": \"{{ $json.mensagemResposta }}\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1264,
+        64
+      ],
+      "id": "3b8b9dd1-d816-4cfc-bb47-fa94e8172df8",
+      "name": "Enviar Resposta WhatsApp",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1cLNRlyuP8Zu6TDZ",
+          "name": "Header Auth account 2"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -334,6 +475,100 @@
           }
         ]
       ]
+    },
+    "Switch Intenção": {
+      "main": [
+        [
+          {
+            "node": "Resposta Horario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resposta Localizacao",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Transferir Atendente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem Saudacao",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta Horario": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resposta Localizacao": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transferir Atendente": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem Saudacao": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback Error": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resposta WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -342,7 +577,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "71366880-0df5-480a-bca4-a456c9b9d69b",
+  "versionId": "99f5781d-5539-4bc3-aef1-4ec9d9dc2428",
   "meta": {
     "instanceId": "0a2780aa64ab71baea2553fcd5762839999421886901a500aca11f39e29bb78d"
   },

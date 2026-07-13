@@ -27,7 +27,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        208,
+        416,
         0
       ],
       "id": "faa215f6-e157-4e55-83f4-a6bbd5d4961b",
@@ -53,7 +53,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        416,
+        624,
         0
       ],
       "id": "d505b5ef-ee4b-4923-975f-a0b8daba969a",
@@ -293,7 +293,7 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        624,
+        832,
         -48
       ],
       "id": "ddf442d1-acd7-4e39-b0c4-73a791d7814f",
@@ -308,6 +308,12 @@
               "name": "mensagemResposta",
               "value": "=Nosso horário de funcionamento: {{ $('Identificar Farmácia').item.json.horarioFuncionamento }}",
               "type": "string"
+            },
+            {
+              "id": "04131cdd-7a71-44ce-a9c2-9e04d1a5eaff",
+              "name": "intencao",
+              "value": "horario",
+              "type": "string"
             }
           ]
         },
@@ -316,7 +322,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        928,
+        1136,
         -224
       ],
       "id": "9d637236-3f9b-4d51-ad7b-3838fbc17b3b",
@@ -331,6 +337,12 @@
               "name": "mensagemResposta",
               "value": "=Estamos localizados em: {{ $('Identificar Farmácia').item.json.endereco }}",
               "type": "string"
+            },
+            {
+              "id": "8e4e5992-a353-4055-a910-7eea3e3d5efe",
+              "name": "intencao",
+              "value": "localizacao",
+              "type": "string"
             }
           ]
         },
@@ -339,7 +351,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        928,
+        1136,
         -80
       ],
       "id": "2bdecea5-77e9-4ad8-9c76-36156e00180a",
@@ -354,6 +366,12 @@
               "name": "mensagemResposta",
               "value": "Já vou te transferir para um atendente humano, aguarde um momento 😊",
               "type": "string"
+            },
+            {
+              "id": "6b108d35-cd9c-41fd-a332-91d14a1e2149",
+              "name": "intencao",
+              "value": "atendente",
+              "type": "string"
             }
           ]
         },
@@ -362,7 +380,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        928,
+        1136,
         48
       ],
       "id": "f3d9b74d-c6c8-4f70-8a68-7617b2e8ddec",
@@ -377,6 +395,12 @@
               "name": "mensagemResposta",
               "value": "={{ $('Identificar Farmácia').item.json.mensagemSaudacao }}",
               "type": "string"
+            },
+            {
+              "id": "10771acb-4eeb-4c03-84e3-4e5c0f4e4129",
+              "name": "intencao",
+              "value": "saudacao",
+              "type": "string"
             }
           ]
         },
@@ -385,7 +409,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        928,
+        1136,
         176
       ],
       "id": "abf32e06-ea3f-4226-832d-ed82efc0d1eb",
@@ -400,6 +424,12 @@
               "name": "mensagemResposta",
               "value": "Desculpe, não entendi. Posso ajudar com: horário, endereço ou falar com um atendente.",
               "type": "string"
+            },
+            {
+              "id": "4ad54200-b577-4a3a-bd78-4fc2c76c627b",
+              "name": "intencao",
+              "value": "fallback",
+              "type": "string"
             }
           ]
         },
@@ -408,7 +438,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        928,
+        1136,
         304
       ],
       "id": "38615e03-6f5e-4e8f-9d49-1fd9269eb698",
@@ -428,8 +458,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1264,
-        64
+        1488,
+        176
       ],
       "id": "3b8b9dd1-d816-4cfc-bb47-fa94e8172df8",
       "name": "Enviar Resposta WhatsApp",
@@ -439,6 +469,66 @@
           "name": "Header Auth account 2"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5079/api/n8n/crm/interacoes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"farmaciaId\": \"{{ $('Identificar Farmácia').item.json.id }}\",\n  \"contatoId\": \"{{ $('Upsert Contato').item.json.id }}\",\n  \"mensagemRecebida\": \"{{ $('Webhook').item.json.body.data.message.conversation }}\",\n  \"mensagemEnviada\": \"{{ $json.mensagemResposta }}\",\n  \"intencaoDetectada\": \"{{ $json.intencao }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1488,
+        -80
+      ],
+      "id": "e44c75d0-fe61-4755-8ad3-3ea1e9139975",
+      "name": "Log Interação",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XHs0wwLG07k2lvbT",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "905e3afd-6fb9-4308-be27-87af505c95f0",
+              "leftValue": "={{ $json.body.data.key.fromMe }}",
+              "rightValue": "=false",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "f3c30534-6c83-411c-8348-de80c7afb4be",
+      "name": "Filtrar Mensagens Recebidas"
     }
   ],
   "pinData": {},
@@ -447,7 +537,7 @@
       "main": [
         [
           {
-            "node": "Identificar Farmácia",
+            "node": "Filtrar Mensagens Recebidas",
             "type": "main",
             "index": 0
           }
@@ -522,6 +612,11 @@
             "node": "Enviar Resposta WhatsApp",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Log Interação",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -531,6 +626,11 @@
         [
           {
             "node": "Enviar Resposta WhatsApp",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Interação",
             "type": "main",
             "index": 0
           }
@@ -544,6 +644,11 @@
             "node": "Enviar Resposta WhatsApp",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Log Interação",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -553,6 +658,11 @@
         [
           {
             "node": "Enviar Resposta WhatsApp",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Interação",
             "type": "main",
             "index": 0
           }
@@ -566,18 +676,39 @@
             "node": "Enviar Resposta WhatsApp",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Log Interação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Resposta WhatsApp": {
+      "main": [
+        []
+      ]
+    },
+    "Filtrar Mensagens Recebidas": {
+      "main": [
+        [
+          {
+            "node": "Identificar Farmácia",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
     }
   },
-  "active": true,
+  "active": false,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "99f5781d-5539-4bc3-aef1-4ec9d9dc2428",
+  "versionId": "278f1370-ce9a-4daa-ba54-79bdae62237a",
   "meta": {
     "instanceId": "0a2780aa64ab71baea2553fcd5762839999421886901a500aca11f39e29bb78d"
   },

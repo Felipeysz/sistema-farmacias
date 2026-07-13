@@ -1,0 +1,107 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "venda-registrada",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9fcdf9ee-418c-4c3a-9173-922a50a22449",
+      "name": "Webhook",
+      "webhookId": "43c4a5da-2405-4a93-9c8e-824ac03f259c"
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:5079/api/n8n/farmacias/{{ $('Webhook').item.json.body.farmaciaId }}/whatsapp-config",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d79c7456-22d5-43a0-85a1-8e9e40b7a257",
+      "name": "Buscar WhatsApp Config",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XHs0wwLG07k2lvbT",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $('Buscar WhatsApp Config').item.json.whatsappNumberId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"number\": \"{{ $('Webhook').item.json.body.telefone }}\",\n    \"text\": \"Obrigado pela sua compra, {{ $('Webhook').item.json.body.nome }}! Seu pedido de R$ {{ $('Webhook').item.json.body.valorTotal }} foi confirmado. 😊\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "33981839-8402-4785-856f-8d172efc53c6",
+      "name": "Enviar Agradecimento",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1cLNRlyuP8Zu6TDZ",
+          "name": "Header Auth account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Buscar WhatsApp Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar WhatsApp Config": {
+      "main": [
+        [
+          {
+            "node": "Enviar Agradecimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "51b629ef-824c-4d12-b43f-145c13625b9c",
+  "meta": {
+    "instanceId": "0a2780aa64ab71baea2553fcd5762839999421886901a500aca11f39e29bb78d"
+  },
+  "nodeGroups": [],
+  "id": "xD5a77JwKfTc5QqN",
+  "tags": []
+}

@@ -64,6 +64,240 @@
           "name": "Header Auth account"
         }
       }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "horario",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "2",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "horário",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "3",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "funciona",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "4",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "aberto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "endereco",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "6",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "endereço",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "7",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "localiza",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "8",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "onde fica",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "atendente",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "10",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "humano",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "11",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "pessoa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "12",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "falar com alguem",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "13",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "oi",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "14",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "ola",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "15",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "olá",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "16",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "bom dia",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "17",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "boa tarde",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  },
+                  {
+                    "id": "18",
+                    "leftValue": "={{ $('Webhook').item.json.body.data.message.conversation.toLowerCase() }}",
+                    "rightValue": "boa noite",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "allMatchingOutputs": false
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        624,
+        -48
+      ],
+      "id": "ddf442d1-acd7-4e39-b0c4-73a791d7814f",
+      "name": "Switch Intenção"
     }
   ],
   "pinData": {},
@@ -89,6 +323,17 @@
           }
         ]
       ]
+    },
+    "Upsert Contato": {
+      "main": [
+        [
+          {
+            "node": "Switch Intenção",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -97,7 +342,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "f0faf28d-d174-4cfb-bf54-946236c9fd86",
+  "versionId": "71366880-0df5-480a-bca4-a456c9b9d69b",
   "meta": {
     "instanceId": "0a2780aa64ab71baea2553fcd5762839999421886901a500aca11f39e29bb78d"
   },

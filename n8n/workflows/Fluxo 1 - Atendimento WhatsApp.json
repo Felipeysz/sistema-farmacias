@@ -38,6 +38,32 @@
           "name": "Header Auth account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5079/api/n8n/crm/contatos/upsert",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n     \"farmaciaId\": \"{{ $('Identificar Farmácia').item.json.id }}\",\n     \"telefone\": \"{{ $('Webhook').item.json.body.data.key.remoteJid.split('@')[0] }}\",\n     \"nome\": \"{{ $('Webhook').item.json.body.data.pushName }}\"\n   }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "d505b5ef-ee4b-4923-975f-a0b8daba969a",
+      "name": "Upsert Contato",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XHs0wwLG07k2lvbT",
+          "name": "Header Auth account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -52,6 +78,17 @@
           }
         ]
       ]
+    },
+    "Identificar Farmácia": {
+      "main": [
+        [
+          {
+            "node": "Upsert Contato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -60,7 +97,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "051db2a2-b41b-4696-8fa8-23810d053b74",
+  "versionId": "f0faf28d-d174-4cfb-bf54-946236c9fd86",
   "meta": {
     "instanceId": "0a2780aa64ab71baea2553fcd5762839999421886901a500aca11f39e29bb78d"
   },

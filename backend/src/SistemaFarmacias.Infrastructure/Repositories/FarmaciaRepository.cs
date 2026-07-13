@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SistemaFarmacias.Application.Interfaces;
 using SistemaFarmacias.Domain.Entities;
 using SistemaFarmacias.Infrastructure.Persistence;
@@ -16,5 +16,12 @@ public class FarmaciaRepository : IFarmaciaRepository
         return _context.WhatsappConfigs
             .Include(w => w.Farmacia)
             .FirstOrDefaultAsync(w => w.WhatsappNumberId == whatsappNumberId);
+    }
+
+    public Task<WhatsappConfig?> GetByFarmaciaIdAsync(Guid farmaciaId)
+    {
+        return _context.WhatsappConfigs
+            .Include(w => w.Farmacia)
+            .FirstOrDefaultAsync(w => w.FarmaciaId == farmaciaId);
     }
 }

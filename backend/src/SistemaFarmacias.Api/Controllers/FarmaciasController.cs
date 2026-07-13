@@ -35,11 +35,6 @@ public class FarmaciasController : ControllerBase
         return Ok(response);
     }
 
-    /// <summary>
-    /// Usado pelo Fluxo 2.1 (venda registrada), que só tem o FarmaciaId
-    /// disponível e precisa descobrir o instance id do Evolution API
-    /// para enviar a mensagem de agradecimento.
-    /// </summary>
     [HttpGet("{farmaciaId:guid}/whatsapp-config")]
     public async Task<ActionResult<WhatsappConfigResponseDto>> GetWhatsappConfig(Guid farmaciaId)
     {
@@ -54,6 +49,25 @@ public class FarmaciasController : ControllerBase
             WhatsappNumberId = config.WhatsappNumberId,
             NomeExibicao = config.NomeExibicao
         };
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Lista todas as farmácias com WhatsApp configurado. Usado pelo Fluxo 2.2
+    /// para iterar sobre todas as farmácias sem depender de um id fixo.
+    /// </summary>
+    [HttpGet]
+    public async Task<ActionResult<List<FarmaciaListItemResponseDto>>> GetAll()
+    {
+        var configs = await _farmaciaRepository.GetAllAsync();
+
+        var response = configs.Select(c => new FarmaciaListItemResponseDto
+        {
+            Id = c.FarmaciaId,
+            WhatsappNumberId = c.WhatsappNumberId,
+            NomeExibicao = c.NomeExibicao
+        });
 
         return Ok(response);
     }

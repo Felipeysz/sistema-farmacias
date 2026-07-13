@@ -24,4 +24,11 @@ public class FarmaciaRepository : IFarmaciaRepository
             .Include(w => w.Farmacia)
             .FirstOrDefaultAsync(w => w.FarmaciaId == farmaciaId);
     }
+
+    public Task<List<WhatsappConfig>> GetAllAsync()
+    {
+        return _context.WhatsappConfigs
+            .Include(w => w.Farmacia)
+            .ToListAsync();
+    }
 }

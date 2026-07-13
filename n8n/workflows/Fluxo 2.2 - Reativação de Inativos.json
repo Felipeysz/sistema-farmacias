@@ -1,0 +1,257 @@
+{
+  "name": "Fluxo 2.2 - Reativação de Inativos",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "cf580016-ae3a-43ad-9620-524ce2219340",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5079/api/n8n/farmacias",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "806fcc1e-8247-40d2-a409-0fd6af9e1612",
+      "name": "Listar Farmácias",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XHs0wwLG07k2lvbT",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "9df9ef45-df9d-4986-b7e4-6409e57eee92",
+      "name": "Loop Farmácias"
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:5079/api/n8n/crm/contatos/inativos?farmaciaId={{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        640,
+        0
+      ],
+      "id": "d4c30695-dce4-4e4c-acad-50c27bd6dfc5",
+      "name": "Buscar Inativos",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XHs0wwLG07k2lvbT",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        944,
+        0
+      ],
+      "id": "c231e997-db6b-4928-af71-c013bd9c502c",
+      "name": "Loop Contatos"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution-api:8080/message/sendText/{{ $('Loop Farmácias').item.json.whatsappNumberId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"number\": \"{{ $json.telefone }}\",\n    \"text\": \"Olá {{ $json.nome }}, sentimos sua falta! Que tal aproveitar para dar uma passada na farmácia? 😊\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1152,
+        0
+      ],
+      "id": "a7139a5b-99ae-4358-a12c-94798c43bbc9",
+      "name": "Enviar Reativação",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1cLNRlyuP8Zu6TDZ",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:5079/api/n8n/crm/reativacoes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"farmaciaId\": \"{{ $('Loop Farmácias').item.json.id }}\",\n  \"contatoId\": \"{{ $('Loop Contatos').item.json.id }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1376,
+        0
+      ],
+      "id": "2120e547-0aa1-4bc8-a648-5f7073ec35c4",
+      "name": "Registrar Reativação",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "XHs0wwLG07k2lvbT",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Listar Farmácias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Listar Farmácias": {
+      "main": [
+        [
+          {
+            "node": "Loop Farmácias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Farmácias": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Buscar Inativos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Inativos": {
+      "main": [
+        [
+          {
+            "node": "Loop Farmácias",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Loop Contatos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Contatos": {
+      "main": [
+        [
+          {
+            "node": "Loop Farmácias",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Reativação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Reativação": {
+      "main": [
+        [
+          {
+            "node": "Loop Contatos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Registrar Reativação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Reativação": {
+      "main": [
+        [
+          {
+            "node": "Loop Contatos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e2810e4d-0930-4082-bdd4-d23e50557d58",
+  "meta": {
+    "instanceId": "0a2780aa64ab71baea2553fcd5762839999421886901a500aca11f39e29bb78d"
+  },
+  "nodeGroups": [],
+  "id": "3TKSyz7kDWrR0FiE",
+  "tags": []
+}

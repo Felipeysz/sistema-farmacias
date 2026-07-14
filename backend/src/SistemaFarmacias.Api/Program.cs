@@ -8,8 +8,19 @@ using SistemaFarmacias.Infrastructure.Messaging;
 using SistemaFarmacias.Infrastructure.Persistence;
 using SistemaFarmacias.Infrastructure.Repositories;
 
-var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", ".env");
-Env.Load(envPath);
+// Em CI/testes de integração não existe .env — Env.Load lançaria uma exceção
+// e derrubaria o host antes mesmo de começar. Nesses ambientes as variáveis
+// já vêm de outra forma (configuração injetada pelo WebApplicationFactory).
+try
+{
+    var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", ".env");
+    Env.Load(envPath);
+}
+catch (FileNotFoundException)
+{
+    // Sem .env disponível (CI, testes de integração) — segue com o que já
+    // estiver em Environment/Configuration.
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,3 +82,7 @@ if (app.Environment.IsDevelopment())
 app.MapControllers();
 
 app.Run();
+
+// Necessário para o WebApplicationFactory<Program> localizar o entry point
+// nos testes de integração (LASDWAS-23).
+public partial class Program { }

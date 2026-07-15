@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SistemaFarmacias.Domain.Entities;
 
 namespace SistemaFarmacias.Infrastructure.Persistence;
@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Contato> Contatos => Set<Contato>();
     public DbSet<Interacao> Interacoes => Set<Interacao>();
     public DbSet<ReativacaoEnviada> ReativacoesEnviadas => Set<ReativacaoEnviada>();
+    public DbSet<VendaProcessada> VendasProcessadas => Set<VendaProcessada>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -44,6 +45,12 @@ public class AppDbContext : DbContext
         });
 
         modelBuilder.Entity<Farmacia>().ToTable("farmacias");
+
+        modelBuilder.Entity<VendaProcessada>(entity =>
+        {
+            entity.ToTable("vendas_processadas");
+            entity.HasKey(e => e.VendaId);
+        });
 
         base.OnModelCreating(modelBuilder);
     }

@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SistemaFarmacias.Application.Dtos;
 using SistemaFarmacias.Application.Events;
@@ -30,6 +30,7 @@ public class VendasController : ControllerBase
     public async Task<IActionResult> Registrar([FromBody] VendaRegistradaRequestDto request)
     {
         var evento = new VendaRegistradaEvent(
+            request.VendaId,
             request.FarmaciaId,
             request.Telefone,
             request.Nome,

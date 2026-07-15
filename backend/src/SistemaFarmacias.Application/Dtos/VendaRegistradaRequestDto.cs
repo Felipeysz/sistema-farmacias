@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace SistemaFarmacias.Application.Dtos;
 
@@ -9,6 +9,14 @@ namespace SistemaFarmacias.Application.Dtos;
 /// </summary>
 public class VendaRegistradaRequestDto
 {
+    /// <summary>
+    /// Identificador único da venda, gerado por quem chama (o PDV). É a chave
+    /// de idempotência: reenviar a mesma venda com o mesmo VendaId (ex: retry
+    /// após timeout de rede) não duplica o efeito no contato.
+    /// </summary>
+    [Required]
+    public Guid VendaId { get; set; }
+
     [Required]
     public Guid FarmaciaId { get; set; }
 

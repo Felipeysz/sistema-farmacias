@@ -46,6 +46,7 @@ builder.Services.AddScoped<IFarmaciaRepository, FarmaciaRepository>();
 builder.Services.AddScoped<IContatoRepository, ContatoRepository>();
 builder.Services.AddScoped<IInteracaoRepository, InteracaoRepository>();
 builder.Services.AddScoped<IReativacaoRepository, ReativacaoRepository>();
+builder.Services.AddScoped<IVendaProcessadaRepository, VendaProcessadaRepository>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 

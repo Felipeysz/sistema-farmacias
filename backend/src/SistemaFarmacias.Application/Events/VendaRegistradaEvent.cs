@@ -1,4 +1,4 @@
-﻿using MediatR;
+using MediatR;
 using SistemaFarmacias.Application.Dtos;
 
 namespace SistemaFarmacias.Application.Events;
@@ -10,6 +10,7 @@ namespace SistemaFarmacias.Application.Events;
 /// </summary>
 public class VendaRegistradaEvent : INotification
 {
+    public Guid VendaId { get; }
     public Guid FarmaciaId { get; }
     public string Telefone { get; }
     public string? Nome { get; }
@@ -18,6 +19,7 @@ public class VendaRegistradaEvent : INotification
     public List<ItemVendaDto> Produtos { get; }
 
     public VendaRegistradaEvent(
+        Guid vendaId,
         Guid farmaciaId,
         string telefone,
         string? nome,
@@ -25,6 +27,7 @@ public class VendaRegistradaEvent : INotification
         DateTime realizadaEm,
         List<ItemVendaDto> produtos)
     {
+        VendaId = vendaId;
         FarmaciaId = farmaciaId;
         Telefone = telefone;
         Nome = nome;

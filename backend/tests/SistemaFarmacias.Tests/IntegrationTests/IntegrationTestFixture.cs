@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SistemaFarmacias.Application.Interfaces;
 using SistemaFarmacias.Infrastructure.Messaging;
 using SistemaFarmacias.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
@@ -85,6 +86,16 @@ public class IntegrationTestFixture : IAsyncLifetime
                         d.ImplementationType == typeof(N8nWebhookConsumerService));
                     if (hostedServiceDescriptor is not null)
                         services.Remove(hostedServiceDescriptor);
+
+                    // Substitui o notifier real (que tentaria conectar de
+                    // verdade ao RabbitMQ) por um no-op — o fluxo de vendas
+                    // testado aqui é sobre idempotência/concorrência do
+                    // contato, não sobre a entrega da notificação ao n8n.
+                    var notifierDescriptor = services.SingleOrDefault(
+                        d => d.ServiceType == typeof(IN8nWebhookNotifier));
+                    if (notifierDescriptor is not null)
+                        services.Remove(notifierDescriptor);
+                    services.AddSingleton<IN8nWebhookNotifier, NoOpN8nWebhookNotifier>();
                 });
             });
 

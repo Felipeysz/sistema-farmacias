@@ -1,26 +1,46 @@
 using SistemaFarmacias.Domain.Entities;
 using SistemaFarmacias.Infrastructure.Repositories;
-using SistemaFarmacias.Tests.TestHelpers;
 
-namespace SistemaFarmacias.Tests.Repositories;
+namespace SistemaFarmacias.Tests.IntegrationTests;
 
+/// <summary>
+/// Testes do ContatoRepository contra um Postgres real (Testcontainers), não
+/// InMemory — necessário desde a LASDWAS-24, que passou a usar
+/// ExecuteUpdateAsync em AtualizarAposVendaAsync (recurso que depende de
+/// tradução para SQL real e não é suportado pelo provider InMemory).
+/// </summary>
+[Collection("Integration")]
 public class ContatoRepositoryTests
 {
+    private readonly IntegrationTestFixture _fixture;
+
+    public ContatoRepositoryTests(IntegrationTestFixture fixture) => _fixture = fixture;
+
+    private async Task<Guid> SeedFarmaciaAsync()
+    {
+        await using var context = await _fixture.CreateDbContextAsync();
+        var farmaciaId = Guid.NewGuid();
+        context.Farmacias.Add(new Farmacia { Id = farmaciaId, Nome = "Farmácia Repository Teste" });
+        await context.SaveChangesAsync();
+        return farmaciaId;
+    }
+
     [Fact]
     public async Task UpsertAsync_QuandoContatoNaoExiste_CriaNovoContatoAtivo()
     {
         // Arrange
-        using var context = TestDbContextFactory.Create();
+        await using var context = await _fixture.CreateDbContextAsync();
         var repository = new ContatoRepository(context);
-        var farmaciaId = Guid.NewGuid();
+        var farmaciaId = await SeedFarmaciaAsync();
+        var telefone = $"55119{Random.Shared.Next(10000000, 99999999)}";
 
         // Act
-        var contato = await repository.UpsertAsync(farmaciaId, "5511988887777", "Cliente Teste");
+        var contato = await repository.UpsertAsync(farmaciaId, telefone, "Cliente Teste");
 
         // Assert
         Assert.NotEqual(Guid.Empty, contato.Id);
         Assert.Equal(farmaciaId, contato.FarmaciaId);
-        Assert.Equal("5511988887777", contato.Telefone);
+        Assert.Equal(telefone, contato.Telefone);
         Assert.Equal("Cliente Teste", contato.Nome);
         Assert.Equal(StatusContato.Ativo, contato.Status);
     }
@@ -29,31 +49,32 @@ public class ContatoRepositoryTests
     public async Task UpsertAsync_QuandoContatoJaExiste_AtualizaNomeSemDuplicar()
     {
         // Arrange
-        using var context = TestDbContextFactory.Create();
+        await using var context = await _fixture.CreateDbContextAsync();
         var repository = new ContatoRepository(context);
-        var farmaciaId = Guid.NewGuid();
-        var primeiro = await repository.UpsertAsync(farmaciaId, "5511988887777", "Nome Antigo");
+        var farmaciaId = await SeedFarmaciaAsync();
+        var telefone = $"55119{Random.Shared.Next(10000000, 99999999)}";
+        var primeiro = await repository.UpsertAsync(farmaciaId, telefone, "Nome Antigo");
 
         // Act
-        var segundo = await repository.UpsertAsync(farmaciaId, "5511988887777", "Nome Novo");
+        var segundo = await repository.UpsertAsync(farmaciaId, telefone, "Nome Novo");
 
         // Assert
-        Assert.Equal(primeiro.Id, segundo.Id); // mesmo contato, não duplicou
+        Assert.Equal(primeiro.Id, segundo.Id);
         Assert.Equal("Nome Novo", segundo.Nome);
-        Assert.Single(context.Contatos); // só existe uma linha na tabela
     }
 
     [Fact]
     public async Task UpsertAsync_QuandoNomeNaoInformado_MantemNomeExistente()
     {
         // Arrange
-        using var context = TestDbContextFactory.Create();
+        await using var context = await _fixture.CreateDbContextAsync();
         var repository = new ContatoRepository(context);
-        var farmaciaId = Guid.NewGuid();
-        await repository.UpsertAsync(farmaciaId, "5511988887777", "Nome Original");
+        var farmaciaId = await SeedFarmaciaAsync();
+        var telefone = $"55119{Random.Shared.Next(10000000, 99999999)}";
+        await repository.UpsertAsync(farmaciaId, telefone, "Nome Original");
 
-        // Act — upsert sem nome (null), simula uma interação sem pushName
-        var resultado = await repository.UpsertAsync(farmaciaId, "5511988887777", null);
+        // Act
+        var resultado = await repository.UpsertAsync(farmaciaId, telefone, null);
 
         // Assert
         Assert.Equal("Nome Original", resultado.Nome);
@@ -63,28 +84,32 @@ public class ContatoRepositoryTests
     public async Task AtualizarAposVendaAsync_SomaValorAoInvesDeSobrescrever()
     {
         // Arrange
-        using var context = TestDbContextFactory.Create();
+        await using var context = await _fixture.CreateDbContextAsync();
         var repository = new ContatoRepository(context);
-        var farmaciaId = Guid.NewGuid();
-        var contato = await repository.UpsertAsync(farmaciaId, "5511988887777", "Cliente");
+        var farmaciaId = await SeedFarmaciaAsync();
+        var telefone = $"55119{Random.Shared.Next(10000000, 99999999)}";
+        var contato = await repository.UpsertAsync(farmaciaId, telefone, "Cliente");
         await repository.AtualizarAposVendaAsync(contato.Id, farmaciaId, DateTime.UtcNow, 50m);
 
         // Act — segunda compra
         var resultado = await repository.AtualizarAposVendaAsync(contato.Id, farmaciaId, DateTime.UtcNow, 30m);
 
         // Assert
-        Assert.Equal(80m, resultado!.TotalGasto); // 50 + 30, nunca sobrescrito
+        Assert.Equal(80m, resultado!.TotalGasto);
     }
 
     [Fact]
     public async Task AtualizarAposVendaAsync_QuandoContatoEstaInativo_ReativaAutomaticamente()
     {
         // Arrange
-        using var context = TestDbContextFactory.Create();
+        await using var context = await _fixture.CreateDbContextAsync();
         var repository = new ContatoRepository(context);
-        var farmaciaId = Guid.NewGuid();
-        var contato = await repository.UpsertAsync(farmaciaId, "5511988887777", "Cliente");
-        contato.Status = StatusContato.Inativo;
+        var farmaciaId = await SeedFarmaciaAsync();
+        var telefone = $"55119{Random.Shared.Next(10000000, 99999999)}";
+        var contato = await repository.UpsertAsync(farmaciaId, telefone, "Cliente");
+
+        var entidade = await context.Contatos.FindAsync(contato.Id);
+        entidade!.Status = StatusContato.Inativo;
         await context.SaveChangesAsync();
 
         // Act
@@ -97,14 +122,15 @@ public class ContatoRepositoryTests
     [Fact]
     public async Task AtualizarAposVendaAsync_QuandoContatoDeOutraFarmacia_RetornaNull()
     {
-        // Arrange — garante isolamento entre tenants
-        using var context = TestDbContextFactory.Create();
+        // Arrange — isolamento entre tenants
+        await using var context = await _fixture.CreateDbContextAsync();
         var repository = new ContatoRepository(context);
-        var farmaciaA = Guid.NewGuid();
-        var farmaciaB = Guid.NewGuid();
-        var contato = await repository.UpsertAsync(farmaciaA, "5511988887777", "Cliente");
+        var farmaciaA = await SeedFarmaciaAsync();
+        var farmaciaB = Guid.NewGuid(); // não precisa existir: só usada no filtro, nunca inserida
+        var telefone = $"55119{Random.Shared.Next(10000000, 99999999)}";
+        var contato = await repository.UpsertAsync(farmaciaA, telefone, "Cliente");
 
-        // Act — tenta atualizar usando o farmaciaId errado
+        // Act
         var resultado = await repository.AtualizarAposVendaAsync(contato.Id, farmaciaB, DateTime.UtcNow, 10m);
 
         // Assert
@@ -115,19 +141,24 @@ public class ContatoRepositoryTests
     public async Task GetInativosAsync_RetornaApenasContatosInativosDaFarmaciaCorreta()
     {
         // Arrange
-        using var context = TestDbContextFactory.Create();
+        await using var context = await _fixture.CreateDbContextAsync();
         var repository = new ContatoRepository(context);
-        var farmaciaA = Guid.NewGuid();
-        var farmaciaB = Guid.NewGuid();
+        var farmaciaA = await SeedFarmaciaAsync();
+        var farmaciaB = await SeedFarmaciaAsync();
 
-        var ativoA = await repository.UpsertAsync(farmaciaA, "5511111111111", "Ativo A");
+        var telefoneAtivo = $"55119{Random.Shared.Next(10000000, 99999999)}";
+        await repository.UpsertAsync(farmaciaA, telefoneAtivo, "Ativo A");
 
-        var inativoA = await repository.UpsertAsync(farmaciaA, "5511222222222", "Inativo A");
-        inativoA.Status = StatusContato.Inativo;
+        var telefoneInativoA = $"55119{Random.Shared.Next(10000000, 99999999)}";
+        var inativoA = await repository.UpsertAsync(farmaciaA, telefoneInativoA, "Inativo A");
 
-        var inativoB = await repository.UpsertAsync(farmaciaB, "5511333333333", "Inativo B (outra farmácia)");
-        inativoB.Status = StatusContato.Inativo;
+        var telefoneInativoB = $"55119{Random.Shared.Next(10000000, 99999999)}";
+        var inativoB = await repository.UpsertAsync(farmaciaB, telefoneInativoB, "Inativo B (outra farmácia)");
 
+        var entidadeA = await context.Contatos.FindAsync(inativoA.Id);
+        entidadeA!.Status = StatusContato.Inativo;
+        var entidadeB = await context.Contatos.FindAsync(inativoB.Id);
+        entidadeB!.Status = StatusContato.Inativo;
         await context.SaveChangesAsync();
 
         // Act

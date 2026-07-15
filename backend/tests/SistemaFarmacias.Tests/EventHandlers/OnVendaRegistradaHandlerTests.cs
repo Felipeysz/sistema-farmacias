@@ -10,17 +10,31 @@ namespace SistemaFarmacias.Tests.EventHandlers;
 public class OnVendaRegistradaHandlerTests
 {
     private static VendaRegistradaEvent CriarEvento(
+        Guid? vendaId = null,
         Guid? farmaciaId = null,
         string telefone = "5511988887777",
         string? nome = "Cliente Teste",
         decimal valorTotal = 49.90m) =>
         new(
+            vendaId ?? Guid.NewGuid(),
             farmaciaId ?? Guid.NewGuid(),
             telefone,
             nome,
             valorTotal,
             DateTime.UtcNow,
             new List<ItemVendaDto> { new() { NomeProduto = "Dipirona", Quantidade = 2 } });
+
+    /// <summary>
+    /// Mock de IVendaProcessadaRepository que sempre reporta "primeira vez"
+    /// (não duplicata) — usado nos testes que focam no fluxo de negócio em
+    /// si, não na idempotência (essa é coberta pelos testes de integração).
+    /// </summary>
+    private static Mock<IVendaProcessadaRepository> CriarVendaProcessadaRepositoryMock()
+    {
+        var mock = new Mock<IVendaProcessadaRepository>();
+        mock.Setup(r => r.TryRegistrarAsync(It.IsAny<Guid>())).ReturnsAsync(true);
+        return mock;
+    }
 
     [Fact]
     public async Task Handle_FluxoFeliz_ChamaUpsertAtualizaVendaENotificaN8n()
@@ -47,8 +61,10 @@ public class OnVendaRegistradaHandlerTests
             .ReturnsAsync(contatoMock);
 
         var notifier = new Mock<IN8nWebhookNotifier>();
+        var vendaProcessadaRepository = CriarVendaProcessadaRepositoryMock();
 
-        var handler = new OnVendaRegistradaHandler(contatoRepository.Object, notifier.Object);
+        var handler = new OnVendaRegistradaHandler(
+            contatoRepository.Object, notifier.Object, vendaProcessadaRepository.Object);
 
         // Act
         await handler.Handle(evento, CancellationToken.None);
@@ -70,6 +86,38 @@ public class OnVendaRegistradaHandlerTests
                 p.ValorTotal == evento.ValorTotal &&
                 p.Produtos.Count == 1)),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_QuandoVendaJaFoiProcessada_NaoChamaNadaMais()
+    {
+        // Arrange — cobre a idempotência no nível do handler (unitário,
+        // complementar aos testes de integração que testam concorrência real)
+        var evento = CriarEvento();
+
+        var contatoRepository = new Mock<IContatoRepository>();
+        var notifier = new Mock<IN8nWebhookNotifier>();
+        var vendaProcessadaRepository = new Mock<IVendaProcessadaRepository>();
+        vendaProcessadaRepository
+            .Setup(r => r.TryRegistrarAsync(evento.VendaId))
+            .ReturnsAsync(false); // já processada antes
+
+        var handler = new OnVendaRegistradaHandler(
+            contatoRepository.Object, notifier.Object, vendaProcessadaRepository.Object);
+
+        // Act
+        await handler.Handle(evento, CancellationToken.None);
+
+        // Assert — nada do fluxo de negócio foi chamado
+        contatoRepository.Verify(
+            r => r.UpsertAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string?>()),
+            Times.Never);
+        contatoRepository.Verify(
+            r => r.AtualizarAposVendaAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<decimal>()),
+            Times.Never);
+        notifier.Verify(
+            n => n.NotificarVendaRegistradaAsync(It.IsAny<N8nVendaWebhookPayload>()),
+            Times.Never);
     }
 
     [Fact]
@@ -97,7 +145,9 @@ public class OnVendaRegistradaHandlerTests
             .ReturnsAsync(contatoExistente);
 
         var notifier = new Mock<IN8nWebhookNotifier>();
-        var handler = new OnVendaRegistradaHandler(contatoRepository.Object, notifier.Object);
+        var vendaProcessadaRepository = CriarVendaProcessadaRepositoryMock();
+        var handler = new OnVendaRegistradaHandler(
+            contatoRepository.Object, notifier.Object, vendaProcessadaRepository.Object);
 
         // Act
         await handler.Handle(evento, CancellationToken.None);
@@ -132,7 +182,9 @@ public class OnVendaRegistradaHandlerTests
             .ReturnsAsync(contatoMock);
 
         var notifier = new Mock<IN8nWebhookNotifier>();
-        var handler = new OnVendaRegistradaHandler(contatoRepository.Object, notifier.Object);
+        var vendaProcessadaRepository = CriarVendaProcessadaRepositoryMock();
+        var handler = new OnVendaRegistradaHandler(
+            contatoRepository.Object, notifier.Object, vendaProcessadaRepository.Object);
 
         // Act
         await handler.Handle(evento, CancellationToken.None);
